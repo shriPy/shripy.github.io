@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guided Agent Disputes — UI Mockup</title>
+<style>
+  /* ─── Reset & Base ─────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Salesforce Sans', Arial, sans-serif;
+    background: #f3f3f3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    color: #1a1a2e;
+  }
+  h1.page-title {
+    font-size: 13px;
+    color: #5a5a72;
+    margin-bottom: 20px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* ─── VoiceCall Context Bar ─────────────────────────────── */
+  .vc-bar {
+    width: 740px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #666;
+  }
+  .vc-bar-pill {
+    background: #f0eefb;
+    color: #5867e8;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .vc-bar-name { font-weight: 700; color: #1a1a2e; font-size: 13px; }
+  .vc-bar-dot { color: #ccc; }
+
+  /* ─── Panel ─────────────────────────────────────────────── */
+  .panel {
+    width: 740px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 24px rgba(88,103,232,.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── Panel Header ──────────────────────────────────────── */
+  .panel-header {
+    background: linear-gradient(135deg, #5867e8 0%, #7b5ce5 100%);
+    padding: 20px 24px 16px;
+    color: #fff;
+  }
+  .panel-header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .panel-header p {
+    font-size: 13px;
+    opacity: .85;
+    line-height: 1.4;
+  }
+
+  /* ─── Transfer Banner ───────────────────────────────────── */
+  .transfer-banner {
+    background: #f5f3ff;
+    border-left: 4px solid #7b5ce5;
+    margin: 16px 20px 0;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: #333;
+    display: none;
+  }
+  .transfer-banner.visible { display: block; }
+  .transfer-banner strong { color: #5867e8; }
+
+  /* ─── Panel Body ────────────────────────────────────────── */
+  .panel-body {
+    padding: 20px 24px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 440px;
+  }
+
+  /* ─── Category Grid (Page 1) ────────────────────────────── */
+  .category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .category-card {
+    border: 2px solid #e8e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .18s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+  }
+  .category-card:hover {
+    border-color: #5867e8;
+    background: #f7f6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(88,103,232,.12);
+  }
+  .category-card.selected {
+    border-color: #5867e8;
+    background: #f0eefb;
+  }
+  .cat-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .cat-label { font-size: 13px; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
+  .cat-desc  { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* ─── Question Cards (Page 2) ───────────────────────────── */
+  .question-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .q-card {
+    border: 1px solid #e8e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color .15s;
+  }
+  .q-card.answered { border-color: #c8d4f5; background: #fafbff; }
+  .q-card.resolved { display: none; }
+
+  .q-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0; margin-top: 2px;
+  }
+  .q-body { flex: 1; }
+  .q-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; line-height: 1.35; }
+  .q-desc  { font-size: 12px; color: #666; line-height: 1.4; margin-bottom: 10px; }
+
+  .q-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* Yes/No toggle */
+  .toggle-group { display: flex; gap: 0; border-radius: 6px; overflow: hidden; border: 1.5px solid #d0d0e0; }
+  .toggle-btn {
+    padding: 5px 16px;
+    font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer;
+    background: #fff; color: #555;
+    transition: all .15s;
+  }
+  .toggle-btn:first-child { border-right: 1px solid #d0d0e0; }
+  .toggle-btn.active-yes { background: #5867e8; color: #fff; }
+  .toggle-btn.active-no  { background: #e84058; color: #fff; }
+  .toggle-btn:hover:not(.active-yes):not(.active-no) { background: #f5f5ff; }
+
+  /* Multi-choice chips */
+  .choice-chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .choice-chip {
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1.5px solid #d0d0e0; background: #fff; color: #444;
+    cursor: pointer; transition: all .15s;
+  }
+  .choice-chip:hover { border-color: #5867e8; color: #5867e8; background: #f0eefb; }
+  .choice-chip.selected { border-color: #5867e8; background: #5867e8; color: #fff; }
+
+  /* KB Button */
+  .kb-btn {
+    padding: 4px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+    border: 1.5px solid #5867e8; background: #fff; color: #5867e8;
+    cursor: pointer; transition: all .15s;
+  }
+  .kb-btn:hover { background: #5867e8; color: #fff; }
+
+  /* Chevron */
+  .chevron-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid #e0e0f0; background: #fff;
+    font-size: 14px; cursor: pointer; color: #aaa;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: auto; flex-shrink: 0;
+    transition: all .15s;
+  }
+  .chevron-btn:hover { border-color: #5867e8; color: #5867e8; }
+
+  /* ─── Result Card ────────────────────────────────────────── */
+  .result-card {
+    border: 2px solid #e8b84b;
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #fffbf0 0%, #fff8e5 100%);
+    margin-top: 12px;
+    display: none;
+  }
+  .result-card.visible { display: block; }
+  .result-label { font-size: 11px; font-weight: 700; color: #c77800; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .result-name  { font-size: 16px; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+  .result-actions { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .result-actions li {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12px; color: #333; line-height: 1.4;
+  }
+  .result-actions li::before {
+    content: '✓'; color: #27ae60; font-weight: 900; flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ─── Confirm Page ───────────────────────────────────────── */
+  .confirm-section { display: flex; flex-direction: column; gap: 14px; }
+  .confirm-summary {
+    border: 1px solid #e8e8f0; border-radius: 10px; padding: 16px;
+  }
+  .confirm-summary h3 { font-size: 13px; font-weight: 700; color: #5867e8; margin-bottom: 10px; }
+  .confirm-row { display: flex; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .confirm-row .lbl { color: #888; font-weight: 500; width: 140px; flex-shrink: 0; }
+  .confirm-row .val { color: #1a1a2e; font-weight: 600; }
+  .open-case-section { border: 1px solid #f5c842; border-radius: 10px; padding: 14px; background: #fffdf0; display: none; }
+  .open-case-section.visible { display: block; }
+  .open-case-section h4 { font-size: 12px; font-weight: 700; color: #c77800; margin-bottom: 8px; }
+  .case-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid #f0e8c8; font-size: 12px;
+  }
+  .case-row:last-child { border-bottom: none; }
+  .case-num { font-weight: 700; color: #5867e8; }
+  .case-status { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: #fce4e8; color: #ba0517; }
+  .use-case-btn {
+    padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    border: 1.5px solid #5867e8; background: #fff; color: #5867e8; cursor: pointer;
+  }
+  .use-case-btn:hover { background: #5867e8; color: #fff; }
+
+  /* ─── Panel Footer ───────────────────────────────────────── */
+  .panel-footer {
+    padding: 14px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    background: #fafafa;
+  }
+  .pagination-dots { display: flex; gap: 7px; align-items: center; flex: 1; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ddd; transition: all .2s;
+    cursor: pointer;
+  }
+  .dot.active { background: #5867e8; width: 22px; border-radius: 4px; }
+  .dot.done   { background: #5867e8; opacity: .4; }
+
+  .footer-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .15s; border: none;
+  }
+  .btn-ghost  { background: none; border: 1.5px solid #d0d0e0; color: #666; }
+  .btn-ghost:hover { border-color: #5867e8; color: #5867e8; background: #f0eefb; }
+  .btn-primary { background: linear-gradient(135deg, #5867e8 0%, #7b5ce5 100%); color: #fff; box-shadow: 0 3px 10px rgba(88,103,232,.3); }
+  .btn-primary:hover { box-shadow: 0 5px 16px rgba(88,103,232,.45); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none; }
+  .btn-back { background: none; border: 1.5px solid #d0d0e0; color: #666; }
+  .btn-back:hover { background: #f5f5f5; }
+
+  /* ─── Pages ─────────────────────────────────────────────── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── Tabs (mockup switcher) ─────────────────────────────── */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 12px;
+    background: #e8e8f0; border-radius: 8px; padding: 4px;
+  }
+  .tab {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; color: #666; border: none; background: none; transition: all .15s;
+  }
+  .tab.active { background: #fff; color: #5867e8; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+  /* ─── Annotation ─────────────────────────────────────────── */
+  .annotation {
+    width: 740px;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.6;
+  }
+  .annotation strong { color: #5867e8; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Guided Agent Disputes — UI Mockup · guidedAgentDisputes LWC</h1>
+
+<!-- Mockup view switcher -->
+<div class="tabs">
+  <button class="tab active" onclick="showMockup('page1')">Page 1 · Category Select</button>
+  <button class="tab" onclick="showMockup('page2')">Page 2 · Qualifying Questions</button>
+  <button class="tab" onclick="showMockup('page3')">Page 3 · Confirm &amp; Submit</button>
+</div>
+
+<!-- VoiceCall context bar -->
+<div class="vc-bar">
+  <span class="vc-bar-name">Sarah Johnson</span>
+  <span class="vc-bar-dot">·</span>
+  <span>Installment Loan · 5416-3074-GKDV</span>
+  <span class="vc-bar-dot">·</span>
+  <span class="vc-bar-pill">Inbound · Disputes</span>
+  <span class="vc-bar-dot">·</span>
+  <span style="color:#27ae60;font-weight:600;">● Active Call</span>
+</div>
+
+<div class="panel">
+
+  <!-- ── PAGE 1: Category Selection ─────────────────────────── -->
+  <div id="mock-page1" class="page active">
+    <div class="panel-header">
+      <h2>Guided Dispute Classification</h2>
+      <p>Select the type of dispute the customer is calling about to begin qualification.</p>
+    </div>
+    <div class="panel-body">
+      <div class="category-grid">
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#fce4e8;">🚨</div>
+          <div>
+            <div class="cat-label">Fraudulent Activity</div>
+            <div class="cat-desc">Unauthorized account, loan, or card activity</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f0fe;">🛍️</div>
+          <div>
+            <div class="cat-label">Issue with Purchase</div>
+            <div class="cat-desc">Merchant dispute, return, or refund</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f0fe;">📋</div>
+          <div>
+            <div class="cat-label">Credit Report Inaccurate</div>
+            <div class="cat-desc">Incorrect or missing credit reporting</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f5e9;">💰</div>
+          <div>
+            <div class="cat-label">Money Account Transaction</div>
+            <div class="cat-desc">Transfer dispute or money account issue</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f0fe;">📄</div>
+          <div>
+            <div class="cat-label">Billing Statement Dispute</div>
+            <div class="cat-desc">Incorrect statement or billing charge</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f0fe;">🔄</div>
+          <div>
+            <div class="cat-label">Update on Dispute Status</div>
+            <div class="cat-desc">Follow-up on an existing open dispute</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#e8f0fe;">👎</div>
+          <div>
+            <div class="cat-label">Disagree with Resolution</div>
+            <div class="cat-desc">Customer disputes a closed dispute outcome</div>
+          </div>
+        </div>
+
+        <div class="category-card" onclick="selectCategory(this)">
+          <div class="cat-icon" style="background:#f5f5f5;">❓</div>
+          <div>
+            <div class="cat-label">Other</div>
+            <div class="cat-desc">Dispute not listed above</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="panel-footer">
+      <div class="pagination-dots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-ghost" onclick="">Cancel</button>
+        <button class="btn btn-primary" disabled id="page1-next">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE 2: Qualifying Questions ──────────────────────── -->
+  <div id="mock-page2" class="page">
+    <div class="panel-header">
+      <h2>Confirm Correct Case Classification</h2>
+      <p>Let's confirm the type of Fraudulent Activity claim to ensure proper <strong>dispute handling.</strong></p>
+    </div>
+
+    <!-- Transfer call banner (shown when CallType = Transfer) -->
+    <div class="transfer-banner visible">
+      <strong>Transfer Info:</strong> &nbsp;Transfer Reason: Unauthorized Activity &nbsp;·&nbsp; Verification Status: Verified &nbsp;·&nbsp; Summary: Customer states they did not open the account
+    </div>
+
+    <div class="panel-body">
+      <div class="question-list">
+
+        <!-- Q1: Multi-choice — what part of account -->
+        <div class="q-card" id="q1">
+          <div class="q-icon" style="background:#e8e8fb;">🛡️</div>
+          <div class="q-body">
+            <div class="q-title">What part of the Affirm account has fraud present?</div>
+            <div class="q-desc">Identify the specific product or service affected.</div>
+            <div class="q-actions">
+              <div class="choice-chip-group">
+                <div class="choice-chip" onclick="selectChip(this,'q1','affirm_account')">Affirm Account</div>
+                <div class="choice-chip" onclick="selectChip(this,'q1','installment_loan')">Installment Loan</div>
+                <div class="choice-chip" onclick="selectChip(this,'q1','affirm_card')">Affirm Card</div>
+                <div class="choice-chip" onclick="selectChip(this,'q1','money_account')">Money Account</div>
+                <div class="choice-chip" onclick="selectChip(this,'q1','personal_payment')">Personal Payment Method</div>
+              </div>
+            </div>
+          </div>
+          <button class="chevron-btn">›</button>
+        </div>
+
+        <!-- Q2: Affirm Card — shown conditionally -->
+        <div class="q-card" id="q2" style="display:none;">
+          <div class="q-icon" style="background:#e8e8fb;">💳</div>
+          <div class="q-body">
+            <div class="q-title">Is this Affirm Card activity?</div>
+            <div class="q-desc">Unauthorized Affirm Card activity AND card type shows "Affirm Card"?</div>
+            <div class="q-actions">
+              <button class="kb-btn" onclick="flashKb()">See Knowledgebase</button>
+              <div class="toggle-group">
+                <button class="toggle-btn" id="q2-yes" onclick="answer('q2','yes')">Yes</button>
+                <button class="toggle-btn" id="q2-no"  onclick="answer('q2','no')">No</button>
+              </div>
+            </div>
+          </div>
+          <button class="chevron-btn">›</button>
+        </div>
+
+        <!-- Q3: Money Account — shown conditionally -->
+        <div class="q-card" id="q3" style="display:none;">
+          <div class="q-icon" style="background:#e8f5e9;">💰</div>
+          <div class="q-body">
+            <div class="q-title">Is this Money Account activity?</div>
+            <div class="q-desc">Unauthorized activity on the consumer's <strong>Money Account</strong> OR the Money Account itself is unauthorized?</div>
+            <div class="q-actions">
+              <div class="toggle-group">
+                <button class="toggle-btn" id="q3-yes" onclick="answer('q3','yes')">Yes</button>
+                <button class="toggle-btn" id="q3-no"  onclick="answer('q3','no')">No</button>
+              </div>
+            </div>
+          </div>
+          <button class="chevron-btn">›</button>
+        </div>
+
+        <!-- Q4: Loans on tab — shown after Q3 -->
+        <div class="q-card" id="q4" style="display:none;">
+          <div class="q-icon" style="background:#e8e8fb;">📋</div>
+          <div class="q-body">
+            <div class="q-title">Are there loans listed on the Loans tab?</div>
+            <div class="q-desc">In Loans tab: Are any loans present?</div>
+            <div class="q-actions">
+              <div class="toggle-group">
+                <button class="toggle-btn" id="q4-yes" onclick="answer('q4','yes')">Yes</button>
+                <button class="toggle-btn" id="q4-no"  onclick="answer('q4','no')">No</button>
+              </div>
+            </div>
+          </div>
+          <button class="chevron-btn">›</button>
+        </div>
+
+        <!-- Q5: Account created without permission — shown after Affirm Account chip -->
+        <div class="q-card" id="q5" style="display:none;">
+          <div class="q-icon" style="background:#fce4e8;">⚠️</div>
+          <div class="q-body">
+            <div class="q-title">Was an Affirm account created for the customer without their permission, and are there no loans on the account?</div>
+            <div class="q-desc">Answer YES if account exists but customer never opened it and has no loan activity.</div>
+            <div class="q-actions">
+              <div class="toggle-group">
+                <button class="toggle-btn" id="q5-yes" onclick="answer('q5','yes')">Yes</button>
+                <button class="toggle-btn" id="q5-no"  onclick="answer('q5','no')">No</button>
+              </div>
+            </div>
+          </div>
+          <button class="chevron-btn">›</button>
+        </div>
+
+        <!-- Result Card -->
+        <div class="result-card" id="result-card">
+          <div class="result-label">Correct Classification:</div>
+          <div class="result-name" id="result-name">Unauthorized Account</div>
+          <ul class="result-actions" id="result-actions">
+            <li>Workstream: Unauthorized Activity case</li>
+            <li>Collect caller information</li>
+            <li>If multiple accounts: confirm if all are unauthorized</li>
+            <li>If multiple accounts: identify affected accounts (do not create child cases)</li>
+            <li>Send follow-up comm → Escalate to Fraud Ops</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <div class="pagination-dots">
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-ghost">← Back</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" id="page2-next" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE 3: Confirm & Submit ──────────────────────────── -->
+  <div id="mock-page3" class="page">
+    <div class="panel-header">
+      <h2>Review &amp; Apply Classification</h2>
+      <p>Confirm the case details and apply the classification to create the case.</p>
+    </div>
+    <div class="panel-body">
+      <div class="confirm-section">
+
+        <!-- Open case warning (shown if existing open case exists) -->
+        <div class="open-case-section visible">
+          <h4>⚠️ Existing Open Cases Found</h4>
+          <div class="case-row">
+            <span class="case-num">00046799279</span>
+            <span>Unauthorized Activity · Phone</span>
+            <span class="case-status">Open</span>
+            <button class="use-case-btn">Use this case</button>
+          </div>
+          <div class="case-row">
+            <span class="case-num">00046712044</span>
+            <span>Fraud Investigation · Phone</span>
+            <span class="case-status">In Progress</span>
+            <button class="use-case-btn">Use this case</button>
+          </div>
+        </div>
+
+        <!-- Case summary -->
+        <div class="confirm-summary">
+          <h3>New Case Details</h3>
+          <div class="confirm-row"><span class="lbl">Customer</span><span class="val">Sarah Johnson (5416-3074-GKDV)</span></div>
+          <div class="confirm-row"><span class="lbl">Classification</span><span class="val">Unauthorized Account</span></div>
+          <div class="confirm-row"><span class="lbl">Case Type</span><span class="val">Unauthorized Activity</span></div>
+          <div class="confirm-row"><span class="lbl">Product</span><span class="val">Affirm Account</span></div>
+          <div class="confirm-row"><span class="lbl">Origin</span><span class="val">Phone</span></div>
+          <div class="confirm-row"><span class="lbl">Source Type</span><span class="val">Guided Experience</span></div>
+          <div class="confirm-row"><span class="lbl">Knowledge Article</span><span class="val" style="color:#5867e8;">VFO-SBS-Unauthorized-Activity</span></div>
+        </div>
+
+        <!-- Result card (repeated on confirm page) -->
+        <div class="result-card visible">
+          <div class="result-label">Agent Action Checklist:</div>
+          <div class="result-name" style="font-size:14px;">Unauthorized Account</div>
+          <ul class="result-actions">
+            <li>Workstream: Unauthorized Activity case</li>
+            <li>Collect caller information</li>
+            <li>If multiple accounts: confirm if all are unauthorized</li>
+            <li>If multiple accounts: identify affected accounts (do not create child cases)</li>
+            <li>Send follow-up comm → Escalate to Fraud Ops</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+    <div class="panel-footer">
+      <div class="pagination-dots">
+        <div class="dot done"></div>
+        <div class="dot done"></div>
+        <div class="dot active"></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-ghost">← Back</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" onclick="simulateSubmit(this)">Apply Classification &amp; Update Case</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Annotation -->
+<div class="annotation">
+  <strong>Mockup notes:</strong> This is a static HTML prototype for design review.
+  In the production LWC, question visibility is driven by <code>DISPUTE_QUESTION_CONFIG</code> in JS and rendered conditionally via <code>template if:true</code>.
+  The question cards on Page 2 above show the <em>Fraudulent Activity → Affirm Account</em> branch — try clicking the product chips and Yes/No toggles to see the interaction pattern.
+  The <strong>Apply Classification &amp; Update Case</strong> button on Page 3 calls <code>GuidedAgentDisputesController.createGuidedCase()</code> and opens the new Case in a console subtab via <code>lightning/platformWorkspaceApi</code>.
+</div>
+
+<script>
+  // ── View switcher ──────────────────────────────────────────
+  function showMockup(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('mock-' + page).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // ── Category card selection (page 1) ──────────────────────
+  function selectCategory(el) {
+    document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('page1-next').disabled = false;
+  }
+
+  // ── Multi-choice chip (page 2) ────────────────────────────
+  var chipState = {};
+  function selectChip(el, questionId, value) {
+    el.closest('.choice-chip-group').querySelectorAll('.choice-chip')
+      .forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    chipState[questionId] = value;
+    document.getElementById('q1').classList.add('answered');
+
+    // Show conditional downstream questions
+    ['q2','q3','q4','q5'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+      document.getElementById(id).classList.remove('answered');
+    });
+    resetAnswers();
+    hideResult();
+
+    if (value === 'affirm_card')    { show('q2'); }
+    if (value === 'money_account')  { show('q3'); }
+    if (value === 'affirm_account') { show('q5'); }
+    if (value === 'installment_loan') {
+      // show a simplified virtual card question
+      show('q4');
+    }
+  }
+
+  function show(id) { document.getElementById(id).style.display = 'flex'; }
+
+  // ── Yes/No answers (page 2) ───────────────────────────────
+  var answers = {};
+  function answer(questionId, value) {
+    answers[questionId] = value;
+
+    var yBtn = document.getElementById(questionId + '-yes');
+    var nBtn = document.getElementById(questionId + '-no');
+    yBtn.className = 'toggle-btn' + (value === 'yes' ? ' active-yes' : '');
+    nBtn.className = 'toggle-btn' + (value === 'no'  ? ' active-no'  : '');
+    document.getElementById(questionId).classList.add('answered');
+
+    checkResolution();
+  }
+
+  function resetAnswers() {
+    answers = {};
+    ['q2','q3','q4','q5'].forEach(function(id) {
+      var yBtn = document.getElementById(id + '-yes');
+      var nBtn = document.getElementById(id + '-no');
+      if (yBtn) yBtn.className = 'toggle-btn';
+      if (nBtn) nBtn.className = 'toggle-btn';
+    });
+  }
+
+  function hideResult() {
+    document.getElementById('result-card').classList.remove('visible');
+    document.getElementById('page2-next').disabled = true;
+  }
+
+  // ── Resolution logic (mirrors DISPUTE_QUESTION_CONFIG) ────
+  var RESOLUTIONS = {
+    q5_yes: { name: 'Unauthorized Account', actions: ['Workstream: Unauthorized Activity case','Collect caller information','If multiple accounts: confirm if all are unauthorized','If multiple accounts: identify affected accounts (do not create child cases)','Send follow-up comm → Escalate to Fraud Ops'] },
+    q5_no:  null,
+    q2_yes: { name: 'Affirm Card Fraud Dispute', actions: ['Workstream: Affirm Card Dispute Intake','Collect date, merchant, and amount for disputed charge','Verify card status in Affirm Card portal','Open dispute intake case'] },
+    q2_no:  null,
+    q3_yes: { name: 'Unauthorized Affirm Money Account Claim', actions: ['Workstream: Unauthorized Money Account Claim','Collect caller information and account details','Confirm Money Account balance and transactions','Escalate to Fraud Ops'] },
+    q3_no:  { name: 'Transfer Dispute', actions: ['Workstream: Affirm Money Transfer Dispute','Collect transfer date and amount','Confirm recipient account','Initiate dispute process'] },
+    q4_yes: { name: 'Unauthorized Virtual Card Activity', actions: ['Workstream: Unauthorized Virtual Card Activity case','Collect caller information','Identify affected virtual card transaction(s)','Escalate to Fraud Ops'] },
+    q4_no:  { name: 'Unauthorized Loan Claim', actions: ['Workstream: Unauthorized Loan Claim case','Collect caller information','Confirm merchant and loan amount','Escalate to Fraud Ops'] },
+  };
+
+  function checkResolution() {
+    var resolved = null;
+    ['q5','q2','q3','q4'].forEach(function(id) {
+      if (answers[id]) {
+        var key = id + '_' + answers[id];
+        if (RESOLUTIONS[key]) resolved = RESOLUTIONS[key];
+      }
+    });
+    if (resolved) {
+      document.getElementById('result-name').textContent = resolved.name;
+      var ul = document.getElementById('result-actions');
+      ul.innerHTML = resolved.actions.map(function(a) {
+        return '<li>' + a + '</li>';
+      }).join('');
+      document.getElementById('result-card').classList.add('visible');
+      document.getElementById('page2-next').disabled = false;
+    } else {
+      hideResult();
+    }
+  }
+
+  // ── KB button flash ───────────────────────────────────────
+  function flashKb() {
+    alert('Opens Knowledge Article "VFO-SBS-Affirm-Card-Fraud-Dispute" in a console subtab via platformWorkspaceApi.openSubtab()');
+  }
+
+  // ── Submit simulation ─────────────────────────────────────
+  function simulateSubmit(btn) {
+    btn.textContent = 'Creating case…';
+    btn.disabled = true;
+    setTimeout(function() {
+      btn.textContent = '✓ Case Created — Opening subtab…';
+      btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+      setTimeout(function() {
+        alert('Case 00046802133 created.\nCase opened in console subtab.\nFlowNavigationNextEvent fired → flow advances.');
+      }, 600);
+    }, 1200);
+  }
+</script>
+</body>
+</html>
